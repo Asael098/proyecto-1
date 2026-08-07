@@ -145,9 +145,9 @@ export default function PanelAlumnoPage() {
                                         )}
 
                                         {act.estado === 'Completada' && (
-                                            <div className="bg-emerald-500/10 border border-emerald-500/30 px-4 py-2 rounded-lg">
-                                                <span className="text-xs text-emerald-400/80 block uppercase font-bold tracking-wider">Calificación</span>
-                                                <span className="text-xl font-black text-emerald-400">{act.puntaje} / 100</span>
+                                            <div className={`${act.puntaje >= 60 ? 'bg-emerald-500/10 border-emerald-500/30  text-emerald-400 ' : 'bg-red-500/10 border-red-500/30  text-red-400 '}border  px-4 py-2 rounded-lg`}>
+                                                <span className="text-xs  block uppercase font-bold tracking-wider">Calificación</span>
+                                                <span className="text-xl font-black ">{act.puntaje} / 100</span>
                                             </div>
                                         )}
 

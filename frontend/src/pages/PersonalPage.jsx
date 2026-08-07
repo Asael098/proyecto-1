@@ -159,7 +159,8 @@ function PersonalPage() {
 
                             {/* Campos específicos de Personal */}
                             <Input placeholder='Cédula Profesional' type='text' name='cedula' defaultValue={editar?.cedula || ''} />
-                            <Select
+
+                            {!editar && (<Select
                                 name='rol'
                                 placeholder='Selecciona un Rol'
                                 defaultValue={editar?.rol || ''}
@@ -167,7 +168,8 @@ function PersonalPage() {
                                     { valor: 'admin', texto: 'Administrador' },
                                     { valor: 'docente', texto: 'Docente' }
                                 ]}
-                            />
+                            />)}
+
 
                             <Input placeholder='Teléfono' type='tel' name='telefono' defaultValue={editar?.telefono || ''} />
                             <Input placeholder='Correo Electrónico' type='email' name='correo' defaultValue={editar?.correo || ''} />

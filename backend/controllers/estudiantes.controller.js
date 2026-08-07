@@ -96,14 +96,14 @@ class Estudiante {
     async actualizar(req, res) {
 
         const { id } = req.params
-        const { nombre, apellido_p, apellido_m, fecha_n, telefono } = req.body
+        const { nombre, apellido_p, apellido_m, fecha_n, telefono, correo, password } = req.body
         try {
 
             const query = `update alumno
-            set nombre=$1,apellido_p=$2,apellido_m=$3,fecha_nacimiento=$4,telefono=$5
-            where id_alumno=$6`
+            set nombre=$1,apellido_p=$2,apellido_m=$3,fecha_nacimiento=$4,telefono=$5,correo=$6,password=$7
+            where id_alumno=$8`
 
-            const values = [nombre, apellido_p, apellido_m, fecha_n, telefono, id]
+            const values = [nombre, apellido_p, apellido_m, fecha_n, telefono, correo, password, id]
 
             const result = await db.query(query, values)
 

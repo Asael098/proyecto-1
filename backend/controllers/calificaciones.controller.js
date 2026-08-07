@@ -35,12 +35,8 @@ class CalificacionesController {
     // ==========================================
     async obtenerReporteGrupo(req, res) {
         const { id_grupo } = req.params;
-        const id_personal = req.usuario.id_personal;
 
         try {
-            const check = await db.query('SELECT id_grupo FROM grupos WHERE id_grupo = $1 AND id_personal = $2', [id_grupo, id_personal]);
-            if (check.rowCount === 0) return res.status(403).json({ error: 'Acceso denegado a este grupo' });
-
             const query = `
                 SELECT 
                     a.id_alumno,
@@ -49,7 +45,9 @@ class CalificacionesController {
                     q.id_quizz,
                     q.nombre AS nombre_examen,
                     COALESCE(c.puntaje, 0) AS puntaje,
+                    aa.id_g_asignado,
                     aa.fecha_limite,
+                    aa.id_alumno AS es_tarea_individual, -- Para saber si es individual
                     c.fecha_evaluacion,
                     CASE 
                         WHEN c.id_calificacion IS NOT NULL THEN 'Completada'
@@ -58,9 +56,10 @@ class CalificacionesController {
                     END AS estado
                 FROM asignar_grupo ag
                 INNER JOIN alumno a ON ag.id_alumno = a.id_alumno
-                INNER JOIN asignar_actividades aa ON ag.id_grupo = aa.id_grupo
+                INNER JOIN asignar_actividades aa ON ag.id_grupo = aa.id_grupo 
+                    -- CAMBIO CLAVE: La actividad debe ser grupal (NULL) O asignada específicamente a este alumno
+                    AND (aa.id_alumno IS NULL OR aa.id_alumno = a.id_alumno)
                 INNER JOIN quizzes q ON aa.id_quizz = q.id_quizz
-                -- CAMBIO CLAVE AQUÍ: Usamos id_g_asignado
                 LEFT JOIN calificaciones c ON aa.id_g_asignado = c.id_g_asignado AND c.id_alumno = a.id_alumno
                 WHERE ag.id_grupo = $1
                 ORDER BY a.nombre ASC, aa.fecha_limite ASC
@@ -69,7 +68,7 @@ class CalificacionesController {
             res.status(200).json(result.rows);
         } catch (error) {
             console.log(error);
-            res.status(500).json({ error: `Error interno: ${error.message}` });
+            res.status(500).json({ error: `Error en el servidor: ${error.message}` });
         }
     }
 }

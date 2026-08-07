@@ -3,7 +3,6 @@ import Table from '../componets/Table.jsx';
 import Form from '../componets/Form.jsx';
 import { Select, Boton } from '../componets/Elements.jsx';
 import { successAlert, DeleteAlert } from '../componets/Alerts.jsx';
-// IMPORTANTE: Asegúrate de tener todas estas rutas exportadas en tu archivo de peticiones
 import { GruposTable, AsignacionGrupoTable, QuizzesTable, ActividadesTable } from '../Peticiones/RutasPeticiones.js';
 
 export default function PanelDocentePage() {
@@ -12,19 +11,31 @@ export default function PanelDocentePage() {
     // Estados de navegación y carga
     const [grupos, setGrupos] = useState([]);
     const [grupoActivo, setGrupoActivo] = useState(null);
-    const [activeTab, setActiveTab] = useState('actividades'); // 'actividades' o 'alumnos'
+    const [activeTab, setActiveTab] = useState('actividades');
     const [cargando, setCargando] = useState(false);
     const [procesandoActividad, setProcesandoActividad] = useState(false);
     const [actividadEditar, setActividadEditar] = useState(null);
+    const [filtroDestino, setFiltroDestino] = useState('Todos');
+
+    // ==========================================
+    // ESTADOS PARA EL MULTI-SELECT DE ALUMNOS
+    // ==========================================
+    const [tipoAsignacion, setTipoAsignacion] = useState('grupo');
+    const [alumnosSeleccionados, setAlumnosSeleccionados] = useState([]); // Arreglo para guardar a los elegidos
+    const [dropdownAbierto, setDropdownAbierto] = useState(false);        // Para abrir/cerrar la lista de checkboxes
 
     // Estados de Datos del Grupo Activo
     const [alumnosGrupo, setAlumnosGrupo] = useState([]);
     const [quizzes, setQuizzes] = useState([]);
     const [actividades, setActividades] = useState([]);
 
-    // ==========================================
-    // 1. Cargar el Directorio de Grupos (Vista Principal)
-    // ==========================================
+    const actividadesFiltradas = actividades.filter(act => {
+        if (filtroDestino === 'Todos') return true;
+        if (filtroDestino === 'Grupo') return act.destinatario.includes('Todo el grupo');
+        if (filtroDestino === 'Individuales') return !act.destinatario.includes('Todo el grupo');
+        return true;
+    });
+
     useEffect(() => {
         const cargarGrupos = async () => {
             try {
@@ -36,23 +47,23 @@ export default function PanelDocentePage() {
             }
         };
         cargarGrupos();
-    }, []);
+    }, [token]);
 
-    // ==========================================
-    // 2. Entrar a un Grupo (Carga Alumnos, Quizzes y Actividades)
-    // ==========================================
     const verDetallesGrupo = async (grupo) => {
         setGrupoActivo(grupo);
         setCargando(true);
-        setActiveTab('actividades'); // Por defecto abre en Trabajo en Clase
+        setActiveTab('actividades');
+
+        // Limpiamos los selectores al entrar a un nuevo grupo
+        setTipoAsignacion('grupo');
+        setAlumnosSeleccionados([]);
+        setDropdownAbierto(false);
 
         try {
-            // A. Traemos los alumnos de este grupo
             const peticionAlumnos = await fetch(`${AsignacionGrupoTable}/detalles/${grupo.id_grupo}`, { headers: { 'Authorization': token } });
             const dataAlumnos = await peticionAlumnos.json();
             setAlumnosGrupo(dataAlumnos);
 
-            // B. Traemos todos los Quizzes del maestro para llenar el <Select>
             const peticionQuizzes = await fetch(QuizzesTable, { headers: { 'Authorization': token } });
             const dataQuizzes = await peticionQuizzes.json();
             setQuizzes(dataQuizzes.map(q => ({
@@ -60,9 +71,7 @@ export default function PanelDocentePage() {
                 texto: `${q.nombre} | ${q.idioma} (${q.nivel})`
             })));
 
-            // C. Traemos las actividades y filtramos SOLO las de este grupo
             await recargarActividades(grupo.nombre);
-
         } catch (error) {
             console.error("Error al cargar los datos del aula", error);
         } finally {
@@ -70,14 +79,10 @@ export default function PanelDocentePage() {
         }
     };
 
-    // ==========================================
-    // 3. Recargar Lista de Actividades Asignadas
-    // ==========================================
     const recargarActividades = async (nombreDelGrupo) => {
         try {
             const peticionAct = await fetch(ActividadesTable, { headers: { 'Authorization': token } });
             const dataAct = await peticionAct.json();
-            // Filtramos basándonos en el nombre del grupo para mostrar solo las relevantes aquí
             const actividadesFiltradas = dataAct.filter(act => act.nombre_grupo === nombreDelGrupo);
             setActividades(actividadesFiltradas);
         } catch (error) {
@@ -86,7 +91,26 @@ export default function PanelDocentePage() {
     }
 
     // ==========================================
-    // 4. Asignar un Nuevo Quiz a este Grupo
+    // FUNCIÓN PARA MARCAR/DESMARCAR ALUMNOS
+    // ==========================================
+    const toggleAlumno = (id) => {
+        setAlumnosSeleccionados(prev =>
+            prev.includes(id)
+                ? prev.filter(alumnoId => alumnoId !== id) // Si ya estaba, lo quitamos
+                : [...prev, id]                            // Si no estaba, lo agregamos
+        );
+    };
+
+    const marcarTodos = () => {
+        if (alumnosSeleccionados.length === alumnosGrupo.length) {
+            setAlumnosSeleccionados([]); // Desmarcar todos
+        } else {
+            setAlumnosSeleccionados(alumnosGrupo.map(a => a.id_alumno)); // Marcar todos
+        }
+    };
+
+    // ==========================================
+    // GUARDADO EN LA BASE DE DATOS (Mejorado para Múltiples Alumnos)
     // ==========================================
     const asignarActividadAlGrupo = async (e) => {
         e.preventDefault();
@@ -95,22 +119,46 @@ export default function PanelDocentePage() {
 
         const formData = new FormData(e.target);
         const registro = Object.fromEntries(formData);
-
-        // Magia aquí: Inyectamos el ID del grupo en el que estamos parados
         registro.id_grupo = grupoActivo.id_grupo;
 
         try {
-            const peticion = await fetch(ActividadesTable, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': token },
-                body: JSON.stringify(registro)
-            });
+            if (tipoAsignacion === 'grupo') {
+                // Opción 1: Tarea para todo el grupo (Un solo fetch con null)
+                registro.id_alumno = null;
+                await fetch(ActividadesTable, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    body: JSON.stringify(registro)
+                });
 
-            if (peticion.ok) {
-                successAlert('Tarea publicada correctamente en este grupo');
-                await recargarActividades(grupoActivo.nombre); // Actualizamos la tabla de abajo
-                e.target.reset();
+            } else {
+                // Opción 2: Tarea para varios alumnos seleccionados
+                if (alumnosSeleccionados.length === 0) {
+                    alert("Debes seleccionar al menos a un estudiante.");
+                    setProcesandoActividad(false);
+                    return;
+                }
+
+                // El Frontend hace el trabajo duro: Un ciclo for enviando la tarea a cada alumno
+                for (const id_alumno of alumnosSeleccionados) {
+                    const payload = { ...registro, id_alumno: id_alumno };
+                    await fetch(ActividadesTable, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                        body: JSON.stringify(payload)
+                    });
+                }
             }
+
+            successAlert(tipoAsignacion === 'individual' ? `Tarea asignada a ${alumnosSeleccionados.length} estudiante(s)` : 'Tarea publicada al grupo');
+            await recargarActividades(grupoActivo.nombre);
+
+            // Limpieza del formulario
+            e.target.reset();
+            setTipoAsignacion('grupo');
+            setAlumnosSeleccionados([]);
+            setDropdownAbierto(false);
+
         } catch (error) {
             console.error("Error al asignar", error);
         } finally {
@@ -118,9 +166,6 @@ export default function PanelDocentePage() {
         }
     };
 
-    // ==========================================
-    // 5. Eliminar una Asignación
-    // ==========================================
     const eliminarActividad = (registro) => {
         DeleteAlert().then(async (res) => {
             if (res.isConfirmed) {
@@ -143,6 +188,9 @@ export default function PanelDocentePage() {
         setAlumnosGrupo([]);
         setActividades([]);
         setActividadEditar(null);
+        setTipoAsignacion('grupo');
+        setAlumnosSeleccionados([]);
+        setDropdownAbierto(false);
     };
 
     const prepararEdicionActividad = (registro) => {
@@ -168,7 +216,7 @@ export default function PanelDocentePage() {
             if (peticion.ok) {
                 successAlert('Tarea reprogramada con éxito');
                 await recargarActividades(grupoActivo.nombre);
-                setActividadEditar(null); // Limpiamos el formulario
+                setActividadEditar(null);
             }
         } catch (error) {
             console.error("Error al reprogramar", error);
@@ -177,18 +225,13 @@ export default function PanelDocentePage() {
         }
     };
 
-    // ==========================================
-    // VISTA A: EL AULA VIRTUAL (Detalle del Grupo)
-    // ==========================================
     if (grupoActivo) {
         return (
             <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sans text-slate-200">
-                {/* Botón de regreso */}
                 <button onClick={volverAlGrid} className="mb-6 flex items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors font-medium">
                     <span>←</span> Volver a mis clases
                 </button>
 
-                {/* Cabecera Banner estilo Classroom */}
                 <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-8 rounded-t-2xl shadow-lg border-b border-emerald-500/30 relative overflow-hidden">
                     <div className="relative z-10">
                         <h1 className="text-4xl font-bold text-white tracking-wide">{grupoActivo.nombre}</h1>
@@ -197,7 +240,6 @@ export default function PanelDocentePage() {
                     <div className="absolute -bottom-12 -right-12 text-9xl opacity-10">📚</div>
                 </div>
 
-                {/* Barra de Pestañas de Navegación */}
                 <div className="bg-slate-800 px-8 pt-4 rounded-b-2xl shadow-md border-b border-x border-slate-700 flex gap-8 mb-8">
                     <button
                         onClick={() => setActiveTab('actividades')}
@@ -213,22 +255,17 @@ export default function PanelDocentePage() {
                     </button>
                 </div>
 
-                {/* CONTENIDO DE LAS PESTAÑAS */}
                 {cargando ? (
                     <div className="text-center py-12 text-slate-400">Cargando el aula virtual...</div>
                 ) : (
                     <>
-                        {/* --- PESTAÑA: TRABAJO EN CLASE --- */}
                         {activeTab === 'actividades' && (
                             <div className="flex flex-col xl:flex-row gap-8 items-start animate-fade-in">
-
-                                {/* Formulario para asignar nuevo examen */}
                                 <div className="w-full xl:w-1/3 bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 sticky top-8">
                                     <h2 className="text-xl font-semibold text-emerald-400 mb-6 border-b border-slate-700 pb-4">
                                         {actividadEditar ? '⏱️ Reprogramar Tarea' : '➕ Publicar Tarea'}
                                     </h2>
 
-                                    {/* Cambiamos el onSubmit dinámicamente */}
                                     <Form
                                         onSubmit={actividadEditar ? reprogramarActividad : asignarActividadAlGrupo}
                                         cargando={procesandoActividad}
@@ -237,7 +274,6 @@ export default function PanelDocentePage() {
                                         <div className="space-y-4 mb-6">
                                             <input type="hidden" name="id_grupo" value={grupoActivo.id_grupo} />
 
-                                            {/* Si estamos editando, solo mostramos el nombre del examen, no dejamos cambiarlo */}
                                             {actividadEditar ? (
                                                 <div className="mb-4">
                                                     <p className="text-sm text-slate-400 mb-1">Examen seleccionado:</p>
@@ -246,7 +282,75 @@ export default function PanelDocentePage() {
                                                     </p>
                                                 </div>
                                             ) : (
-                                                <Select name='id_quizz' placeholder='Selecciona el Examen a asignar' opciones={quizzes} />
+                                                <>
+                                                    <Select name='id_quizz' placeholder='Selecciona el Examen a asignar' opciones={quizzes} />
+
+                                                    <div className="mb-4">
+                                                        <p className="text-sm text-slate-400 mb-1">Dirigido a:</p>
+                                                        <select
+                                                            value={tipoAsignacion}
+                                                            onChange={(e) => {
+                                                                setTipoAsignacion(e.target.value);
+                                                                setAlumnosSeleccionados([]); // Limpiamos al cambiar
+                                                                setDropdownAbierto(false);
+                                                            }}
+                                                            className="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white outline-none focus:border-emerald-400 mb-3"
+                                                        >
+                                                            <option value="grupo">👥 Todo el Grupo</option>
+                                                            <option value="individual">👤 Alumnos Específicos</option>
+                                                        </select>
+
+                                                        {/* ========================================== */}
+                                                        {/* MENU DESPLEGABLE CON CHECKBOXES            */}
+                                                        {/* ========================================== */}
+                                                        {tipoAsignacion === 'individual' && (
+                                                            <div className="animate-fade-in bg-slate-900/60 p-3 rounded-xl border border-emerald-500/30 relative">
+                                                                <label className="text-xs text-emerald-400 font-bold block mb-2">Selecciona a los Alumnos:</label>
+
+                                                                {/* El botón que simula ser un Input/Select */}
+                                                                <div
+                                                                    onClick={() => setDropdownAbierto(!dropdownAbierto)}
+                                                                    className="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white flex justify-between items-center cursor-pointer hover:border-emerald-400 transition-colors"
+                                                                >
+                                                                    <span className="text-sm">
+                                                                        {alumnosSeleccionados.length === 0
+                                                                            ? '-- Elige Estudiantes --'
+                                                                            : `${alumnosSeleccionados.length} estudiante(s) seleccionado(s)`}
+                                                                    </span>
+                                                                    <span className="text-xs text-slate-400">{dropdownAbierto ? '▲' : '▼'}</span>
+                                                                </div>
+
+                                                                {/* La lista flotante de Checkboxes */}
+                                                                {dropdownAbierto && (
+                                                                    <div className="absolute left-3 right-3 mt-1 z-50 bg-slate-800 border border-slate-500 rounded-lg shadow-2xl max-h-48 overflow-y-auto custom-scrollbar">
+
+                                                                        {/* Botón rápido para marcar/desmarcar todos */}
+                                                                        <div
+                                                                            onClick={marcarTodos}
+                                                                            className="p-2.5 border-b border-slate-600 hover:bg-slate-700 cursor-pointer text-xs font-bold text-emerald-400 sticky top-0 bg-slate-800 z-10"
+                                                                        >
+                                                                            {alumnosSeleccionados.length === alumnosGrupo.length ? '▢ Desmarcar Todos' : '☑ Marcar Todos'}
+                                                                        </div>
+
+                                                                        {alumnosGrupo.map(a => (
+                                                                            <label key={a.id_alumno} className="flex items-center gap-3 p-3 hover:bg-slate-700/50 cursor-pointer border-b border-slate-700/50 last:border-0">
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    checked={alumnosSeleccionados.includes(a.id_alumno)}
+                                                                                    onChange={() => toggleAlumno(a.id_alumno)}
+                                                                                    className="accent-emerald-500 w-4 h-4 cursor-pointer"
+                                                                                />
+                                                                                <span className="text-sm text-slate-200">
+                                                                                    {a.nombre} {a.apellido_p}
+                                                                                </span>
+                                                                            </label>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </>
                                             )}
 
                                             <div>
@@ -257,13 +361,11 @@ export default function PanelDocentePage() {
                                                     type="date"
                                                     name="fecha_limite"
                                                     required
-                                                    // Si estamos editando, extraemos solo la fecha (YYYY-MM-DD) para pre-llenar el input
                                                     defaultValue={actividadEditar ? actividadEditar.fecha_limite.split('T')[0] : ''}
                                                     className="border border-slate-600 bg-slate-700 text-white p-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 w-full"
                                                 />
                                             </div>
 
-                                            {/* Botón para cancelar la edición */}
                                             {actividadEditar && (
                                                 <button
                                                     type="button"
@@ -277,7 +379,6 @@ export default function PanelDocentePage() {
                                     </Form>
                                 </div>
 
-                                {/* Tabla de actividades ya asignadas a este grupo */}
                                 <div className="w-full xl:w-2/3 bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
                                     <h2 className="text-xl font-semibold text-white mb-6">Exámenes Activos en este Grupo</h2>
 
@@ -287,11 +388,31 @@ export default function PanelDocentePage() {
                                         </div>
                                     ) : (
                                         <div className="overflow-hidden rounded-xl border border-slate-700 shadow-inner">
+                                            <div className="flex gap-2 mb-4">
+                                                <button
+                                                    onClick={() => setFiltroDestino('Todos')}
+                                                    className={`px-3 py-1 rounded-lg text-xs font-bold ${filtroDestino === 'Todos' ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-300'}`}
+                                                >
+                                                    Todas ({actividades.length})
+                                                </button>
+                                                <button
+                                                    onClick={() => setFiltroDestino('Grupo')}
+                                                    className={`px-3 py-1 rounded-lg text-xs font-bold ${filtroDestino === 'Grupo' ? 'bg-blue-500 text-white' : 'bg-slate-700 text-slate-300'}`}
+                                                >
+                                                    👥 Grupales
+                                                </button>
+                                                <button
+                                                    onClick={() => setFiltroDestino('Individuales')}
+                                                    className={`px-3 py-1 rounded-lg text-xs font-bold ${filtroDestino === 'Individuales' ? 'bg-purple-500 text-white' : 'bg-slate-700 text-slate-300'}`}
+                                                >
+                                                    👤 Individuales
+                                                </button>
+                                            </div>
                                             <Table
                                                 onDelete={eliminarActividad}
-                                                onEdit={prepararEdicionActividad} // <-- LE PASAMOS LA FUNCIÓN AQUÍ
-                                                data={actividades}
-                                                ocultar={['id_g_asignado', 'nombre_grupo']}
+                                                onEdit={prepararEdicionActividad}
+                                                data={actividadesFiltradas}
+                                                ocultar={['id_g_asignado', 'nombre_grupo', 'id_alumno']}
                                             />
                                         </div>
                                     )}
@@ -299,7 +420,6 @@ export default function PanelDocentePage() {
                             </div>
                         )}
 
-                        {/* --- PESTAÑA: PERSONAS (ALUMNOS) --- */}
                         {activeTab === 'alumnos' && (
                             <div className="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 animate-fade-in">
                                 <h2 className="text-xl font-semibold text-white mb-6">Directorio de Estudiantes</h2>
@@ -320,9 +440,7 @@ export default function PanelDocentePage() {
         )
     }
 
-    // ==========================================
     // VISTA B: GRID PRINCIPAL (Tarjetas de Clases)
-    // ==========================================
     return (
         <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sans text-slate-200">
             <div className="mb-8 border-b border-slate-700 pb-4 flex justify-between items-end">

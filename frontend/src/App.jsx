@@ -1,5 +1,5 @@
 import { Route, Routes } from "react-router-dom"
-import PrincipalPage from './pages/PrincipalPage';
+
 import LoginPage from './pages/LoginPage';
 import DashboradPage from "./pages/DashboradPage";
 import AlumnosPage from "./pages/AlumnosPage";
@@ -27,7 +27,7 @@ function App() {
 
     <Routes>
 
-      <Route path="/" element={<PrincipalPage />} />
+
       <Route path="/login" element={<LoginPage />} />
 
       <Route element={<Aside />}>

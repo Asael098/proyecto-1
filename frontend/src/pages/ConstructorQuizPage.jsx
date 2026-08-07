@@ -68,8 +68,10 @@ export default function ConstructorQuizPage() {
             objetoRespuesta = { tipoFormato: 'audio_opcion_multiple', audio: urlAudio, opciones: [opcionA, opcionB, opcionC], correcta: respuestaCorrecta };
         }
         else if (tipoFormato === 'arrastrar_palabras') {
+
+            const oracionLimpia = oracionCorrecta.trim().replace(/\s+/g, ' ');
             // El backend/frontend del alumno se encargará de desordenar esta oración
-            objetoRespuesta = { tipoFormato: 'arrastrar_palabras', oracion_correcta: oracionCorrecta };
+            objetoRespuesta = { tipoFormato: 'arrastrar_palabras', oracion_correcta: oracionLimpia };
         }
         else if (tipoFormato === 'relacion_columnas') {
             objetoRespuesta = { tipoFormato: 'relacion_columnas', parejas: parejas };

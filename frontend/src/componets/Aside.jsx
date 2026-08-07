@@ -1,9 +1,9 @@
 import React from "react";
-import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode'; // Importamos para leer el rol
+import { Outlet, Link } from 'react-router-dom';
+import ProfileMenu from './ProfileMenu.jsx'; // 1. Tu nuevo menú inteligente
+import { jwtDecode } from 'jwt-decode';
 
-// 1. DICCIONARIO DE RUTAS
-// Aquí defines todas las rutas de tu sistema y quién puede verlas
+// DICCIONARIO DE RUTAS
 const MENU_LINKS = [
     {
         path: '/Dashboard',
@@ -82,76 +82,69 @@ const MENU_LINKS = [
 ];
 
 export default function Aside() {
-    const navigate = useNavigate();
-
-    // 2. OBTENER EL ROL DEL USUARIO
-    // Extraemos el token del localStorage y lo decodificamos
     const token = localStorage.getItem('token');
-    let rolUsuario = '';
+    let usuarioRol = 'invitado';
 
     if (token) {
         try {
-            const decodificado = jwtDecode(token);
-            rolUsuario = decodificado.rol; // Ojo: asegúrate de que tu backend mande el rol bajo esta propiedad
+            const decoded = jwtDecode(token);
+            usuarioRol = decoded.rol || 'invitado';
         } catch (error) {
-            console.error("Token inválido");
+            console.error("Error al decodificar token");
         }
     }
 
-    // 3. FILTRAR LOS ENLACES
-    // Solo nos quedamos con los enlaces donde el arreglo de rolesPermitidos incluya el rol del usuario actual
-    const enlacesVisibles = MENU_LINKS.filter(link =>
-        link.rolesPermitidos.includes(rolUsuario)
-    );
-
-    const cerrarSesion = () => {
-        localStorage.removeItem('token');
-        navigate('/login');
-    };
+    const enlacesVisibles = MENU_LINKS.filter(link => link.rolesPermitidos.includes(usuarioRol));
 
     return (
-        <div className="flex h-screen bg-gray-100 font-sans w-full">
+        <div className="flex h-screen bg-slate-900 text-slate-200">
 
-            {/* El Sidebar Dinámico */}
-            <aside className="w-64 bg-slate-800 text-white flex flex-col shadow-xl">
-                <div className="p-6 text-center text-2xl font-bold border-b border-slate-700">
-                    Quizz Hub
+            {/* ========================================== */}
+            {/* 1. MENÚ LATERAL IZQUIERDO (SIDEBAR) */}
+            {/* ========================================== */}
+            <aside className="w-64 bg-slate-800 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.2)] border-r border-slate-700 z-20 ">
+                <div className="p-6 border-b border-slate-700">
+                    <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500 tracking-wider">
+                        Quizz<span className="text-white">Hub</span>
+                    </h2>
                 </div>
 
                 <nav className="flex-1 px-4 py-6 space-y-2">
-
-                    {/* 4. RENDERIZAR LOS ENLACES DINÁMICAMENTE */}
                     {enlacesVisibles.map((link, index) => (
                         <Link
                             key={index}
                             to={link.path}
-                            className="block px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors flex items-center gap-2"
+                            className="block px-4 py-3 rounded-xl hover:bg-slate-700/50 transition-colors flex items-center gap-3 font-medium text-slate-300 hover:text-white"
                         >
-                            <span>{link.icon}</span>
+                            <span className="text-xl">{link.icon}</span>
                             {link.label}
                         </Link>
                     ))}
 
-                    {/* Mensaje por si un rol no tiene rutas asignadas */}
                     {enlacesVisibles.length === 0 && (
-                        <p className="text-slate-400 text-sm px-4">No hay módulos disponibles.</p>
+                        <p className="text-slate-500 text-sm px-4 text-center mt-10">No hay módulos disponibles.</p>
                     )}
-
                 </nav>
 
-                <div className="p-4 border-t border-slate-700">
-                    <button
-                        onClick={cerrarSesion}
-                        className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-semibold transition-colors"
-                    >
-                        Cerrar Sesión
-                    </button>
-                </div>
+                {/* Eliminamos el viejo botón rojo de Cerrar Sesión de aquí */}
             </aside>
 
-            {/* Contenido Dinámico a la derecha */}
-            <main className="flex-1 overflow-y-auto w-full">
-                <Outlet />
+            {/* ========================================== */}
+            {/* 2. ÁREA PRINCIPAL DERECHA */}
+            {/* ========================================== */}
+            <main className="flex-1 flex flex-col h-screen overflow-hidden w-full relative z-10">
+
+                {/* NUEVO: Barra Superior (Topbar) */}
+                <header className="h-20 bg-slate-800/40 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-end px-8 shrink-0 shadow-sm">
+                    {/* 2. Aquí inyectamos el Avatar y el menú desplegable */}
+                    <ProfileMenu />
+                </header>
+
+                {/* Contenido Dinámico (Las páginas reales de tu app) */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    <Outlet />
+                </div>
+
             </main>
 
         </div>

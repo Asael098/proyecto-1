@@ -56,9 +56,10 @@ class AlumnoController {
                     END AS estado
                 FROM asignar_actividades aa
                 INNER JOIN quizzes q ON aa.id_quizz = q.id_quizz
-                -- AQUI ESTÁ LA CORRECCIÓN CLAVE:
                 LEFT JOIN calificaciones c ON aa.id_g_asignado = c.id_g_asignado AND c.id_alumno = $2
                 WHERE aa.id_grupo = $1
+                -- ¡AQUÍ ESTÁ EL NUEVO FILTRO DE SEGURIDAD!
+                AND (aa.id_alumno IS NULL OR aa.id_alumno = $2)
                 ORDER BY aa.fecha_limite ASC
             `;
             const result = await db.query(query, [id_grupo, id_alumno]);
