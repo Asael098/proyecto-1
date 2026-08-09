@@ -18,7 +18,13 @@ export default function GeneradorIAPage() {
     const numeros = [{ valor: '5', texto: '5 Preguntas' }, { valor: '10', texto: '10 Preguntas' }, { valor: '15', texto: '15 Preguntas' }];
     const publicos = [{ valor: 'Adolescentes', texto: 'Adolescentes' }, { valor: 'Adultos', texto: 'Adultos' }, { valor: 'Profesionistas', texto: 'Profesionistas' }];
     const habilidades = [{ valor: 'Grammar', texto: 'Gramática' }, { valor: 'Vocabulary', texto: 'Vocabulario' }, { valor: 'Reading', texto: 'Comprensión Lectora' }];
-    const tipos = [{ valor: 'opcion_multiple', texto: 'Opción Múltiple' }, { valor: 'llenado_espacios', texto: 'Llenado de Espacios' }];
+    const tipos = [
+        { valor: 'opcion_multiple', texto: 'Opción Múltiple' },
+        { valor: 'llenado_espacios', texto: 'Llenado de Espacios' },
+        { valor: 'arrastrar_palabras', texto: 'Ordenar Oraciones' },
+        { valor: 'relacion_columnas', texto: 'Relación de Columnas' },
+        { valor: 'texto_opcion_multiple', texto: 'Texto + Opción Múltiple' }
+    ];
 
     // ==========================================
     // 1. GENERAR CON IA
@@ -75,6 +81,38 @@ export default function GeneradorIAPage() {
         setQuizGenerado(nuevoQuiz);
     };
 
+    const eliminarPreguntaIA = (indexPregunta) => {
+        const nuevoQuiz = { ...quizGenerado };
+        nuevoQuiz.questions = nuevoQuiz.questions.filter((_, i) => i !== indexPregunta);
+        setQuizGenerado(nuevoQuiz);
+    };
+
+    // --- Funciones para Relación de Columnas ---
+    const actualizarPareja = (indexPregunta, indexPareja, campo, valor) => {
+        const nuevoQuiz = { ...quizGenerado };
+        nuevoQuiz.questions[indexPregunta].pairs[indexPareja][campo] = valor;
+        setQuizGenerado(nuevoQuiz);
+    };
+
+    const agregarParejaIA = (indexPregunta) => {
+        const nuevoQuiz = { ...quizGenerado };
+        nuevoQuiz.questions[indexPregunta].pairs.push({ left: '', right: '' });
+        setQuizGenerado(nuevoQuiz);
+    };
+
+    const quitarParejaIA = (indexPregunta, indexPareja) => {
+        const nuevoQuiz = { ...quizGenerado };
+        nuevoQuiz.questions[indexPregunta].pairs = nuevoQuiz.questions[indexPregunta].pairs.filter((_, i) => i !== indexPareja);
+        setQuizGenerado(nuevoQuiz);
+    };
+
+    // --- Función para actualizar el texto de lectura compartido ---
+    const actualizarLecturaCompartida = (valor) => {
+        const nuevoQuiz = { ...quizGenerado };
+        nuevoQuiz.questions = nuevoQuiz.questions.map(q => ({ ...q, reading_text: valor }));
+        setQuizGenerado(nuevoQuiz);
+    };
+
     // ==========================================
     // 3. GUARDAR EN BASE DE DATOS
     // ==========================================
@@ -114,15 +152,47 @@ export default function GeneradorIAPage() {
             // 3. Empaquetar TODAS las preguntas en un solo arreglo (como lo espera tu backend)
             const tipoFormato = quizGenerado.tipo || 'opcion_multiple';
 
-            const arregloPreguntas = quizGenerado.questions.map(q => ({
-                pregunta: q.question_text || q.pregunta || "¿Pregunta sin texto?",
-                respuestas: {
-                    tipoFormato: tipoFormato,
-                    opciones: q.options || q.opciones || [],
-                    correcta: q.correct_answer || q.respuesta_correcta || "",
-                    lectura: q.feedback || q.retroalimentacion || ""
+            const arregloPreguntas = quizGenerado.questions.map(q => {
+                // Estructura diferente según el tipo de formato
+                if (tipoFormato === 'arrastrar_palabras') {
+                    return {
+                        pregunta: q.question_text || "Ordena la siguiente oración",
+                        respuestas: {
+                            tipoFormato: 'arrastrar_palabras',
+                            oracion_correcta: (q.correct_sentence || "").trim().replace(/\s+/g, ' ')
+                        }
+                    };
                 }
-            }));
+                if (tipoFormato === 'relacion_columnas') {
+                    return {
+                        pregunta: q.question_text || "Relaciona las columnas",
+                        respuestas: {
+                            tipoFormato: 'relacion_columnas',
+                            parejas: (q.pairs || []).map(p => ({ izquierda: p.left || '', derecha: p.right || '' }))
+                        }
+                    };
+                }
+                if (tipoFormato === 'texto_opcion_multiple') {
+                    return {
+                        pregunta: q.question_text || "Lee el texto y responde",
+                        respuestas: {
+                            tipoFormato: 'texto_opcion_multiple',
+                            lectura: q.reading_text || '',
+                            opciones: q.options || [],
+                            correcta: q.correct_answer || ''
+                        }
+                    };
+                }
+                return {
+                    pregunta: q.question_text || q.pregunta || "¿Pregunta sin texto?",
+                    respuestas: {
+                        tipoFormato: tipoFormato,
+                        opciones: q.options || q.opciones || [],
+                        correcta: q.correct_answer || q.respuesta_correcta || "",
+                        lectura: q.feedback || q.retroalimentacion || ""
+                    }
+                };
+            });
 
             // 4. Enviar el paquete completo a la API
             const resPreguntas = await fetch(`${QuizzesTable}/${id_quizz}/preguntas`, {
@@ -146,7 +216,7 @@ export default function GeneradorIAPage() {
         }
     };
     return (
-        <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sans text-slate-200">
+        <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sanspro text-slate-200">
             <div className="mb-8 border-b border-slate-700 pb-4">
                 <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500 flex items-center gap-2">
                     ✨ Creador de Quizzes con IA
@@ -234,9 +304,37 @@ export default function GeneradorIAPage() {
                                 />
                             </div>
 
+                            {/* ===================== */}
+                            {/* BLOQUE COMPARTIDO: TEXTO DE LECTURA (solo para texto_opcion_multiple) */}
+                            {/* ===================== */}
+                            {quizGenerado.tipo === 'texto_opcion_multiple' && quizGenerado.questions.length > 0 && (
+                                <div className="mb-6 bg-slate-900/80 p-5 rounded-xl border border-blue-500/30 shadow-inner">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <span className="text-2xl">📖</span>
+                                        <p className="text-sm text-blue-400 font-semibold">Texto de Lectura Compartido (editable)</p>
+                                    </div>
+                                    <textarea
+                                        value={quizGenerado.questions[0]?.reading_text || ''}
+                                        onChange={(e) => actualizarLecturaCompartida(e.target.value)}
+                                        rows="6"
+                                        className="w-full p-4 bg-slate-800 border border-blue-500/20 rounded-lg text-blue-100 text-sm outline-none focus:border-blue-400 transition-colors resize-none leading-relaxed"
+                                        placeholder="Escribe o edita el texto de lectura aquí..."
+                                    />
+                                    <p className="text-xs text-slate-500 mt-2">Este texto se mostrará a los alumnos antes de las preguntas.</p>
+                                </div>
+                            )}
+
                             <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                                 {quizGenerado.questions.map((q, i) => (
-                                    <div key={i} className="bg-slate-700/30 p-5 rounded-xl border border-slate-600 hover:border-purple-500/50 transition-colors">
+                                    <div key={i} className="bg-slate-700/30 p-5 rounded-xl border border-slate-600 hover:border-purple-500/50 transition-colors relative group">
+
+                                        {/* Botón eliminar pregunta */}
+                                        <button
+                                            onClick={() => eliminarPreguntaIA(i)}
+                                            className="absolute top-3 right-3 text-red-400 hover:text-red-300 bg-red-400/10 hover:bg-red-400/20 px-2 py-1 rounded text-xs transition-colors opacity-0 group-hover:opacity-100"
+                                        >
+                                            ✖ Quitar
+                                        </button>
 
                                         {/* Título de la pregunta editable */}
                                         <div className="flex gap-2 mb-4">
@@ -249,8 +347,110 @@ export default function GeneradorIAPage() {
                                             />
                                         </div>
 
-                                        {/* Opciones editables y selección de la correcta */}
-                                        {q.options && (
+                                        {/* ===================== */}
+                                        {/* VISTA: ARRASTRAR PALABRAS */}
+                                        {/* ===================== */}
+                                        {quizGenerado.tipo === 'arrastrar_palabras' && q.correct_sentence && (
+                                            <div className="ml-6 mb-4">
+                                                <p className="text-sm text-slate-400 mb-2 font-medium">🧩 Oración correcta (editable):</p>
+                                                <input
+                                                    type="text"
+                                                    value={q.correct_sentence}
+                                                    onChange={(e) => actualizarPregunta(i, 'correct_sentence', e.target.value)}
+                                                    className="w-full p-2.5 bg-slate-900 border border-indigo-500/50 rounded-lg text-indigo-200 outline-none focus:border-indigo-400 transition-colors mb-3"
+                                                />
+                                                {/* Preview como chips */}
+                                                <div className="flex gap-2 flex-wrap">
+                                                    {q.correct_sentence.split(' ').filter(p => p).map((palabra, idx) => (
+                                                        <span key={idx} className="bg-indigo-500/20 border border-indigo-500/50 text-indigo-300 px-3 py-1.5 rounded-md shadow-sm text-sm font-medium">
+                                                            {palabra}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* ===================== */}
+                                        {/* VISTA: RELACIÓN DE COLUMNAS */}
+                                        {/* ===================== */}
+                                        {quizGenerado.tipo === 'relacion_columnas' && q.pairs && (
+                                            <div className="ml-6 mb-4">
+                                                <p className="text-sm text-slate-400 mb-2 font-medium">🔗 Parejas (editables):</p>
+                                                <div className="space-y-2">
+                                                    {/* Encabezados */}
+                                                    <div className="grid grid-cols-[1fr_1fr_auto] gap-2 text-xs text-slate-500 font-semibold px-1">
+                                                        <span>Columna Izquierda</span>
+                                                        <span>Columna Derecha</span>
+                                                        <span className="w-8"></span>
+                                                    </div>
+                                                    {q.pairs.map((pair, idx) => (
+                                                        <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
+                                                            <input
+                                                                type="text"
+                                                                value={pair.left}
+                                                                onChange={(e) => actualizarPareja(i, idx, 'left', e.target.value)}
+                                                                className="p-2 bg-slate-900 border border-amber-500/30 rounded-lg text-amber-200 text-sm outline-none focus:border-amber-400 transition-colors"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                value={pair.right}
+                                                                onChange={(e) => actualizarPareja(i, idx, 'right', e.target.value)}
+                                                                className="p-2 bg-slate-900 border border-cyan-500/30 rounded-lg text-cyan-200 text-sm outline-none focus:border-cyan-400 transition-colors"
+                                                            />
+                                                            <button
+                                                                onClick={() => quitarParejaIA(i, idx)}
+                                                                className="text-red-400 hover:text-red-300 text-xs p-1 rounded hover:bg-red-400/10 transition-colors"
+                                                                title="Quitar pareja"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <button
+                                                    onClick={() => agregarParejaIA(i)}
+                                                    className="text-emerald-400 text-sm font-medium hover:text-emerald-300 mt-2"
+                                                >
+                                                    + Añadir otra pareja
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {/* ===================== */}
+                                        {/* VISTA: TEXTO + OPCIÓN MÚLTIPLE (solo opciones, el texto está arriba) */}
+                                        {/* ===================== */}
+                                        {quizGenerado.tipo === 'texto_opcion_multiple' && q.options && (
+                                            <div className="ml-6 mb-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    {q.options.map((opt, idx) => (
+                                                        <div key={idx} className="flex items-center gap-2">
+                                                            <input
+                                                                type="radio"
+                                                                name={`correct_${i}`}
+                                                                checked={opt === q.correct_answer}
+                                                                onChange={() => actualizarPregunta(i, 'correct_answer', opt)}
+                                                                className="accent-emerald-500 w-5 h-5 cursor-pointer shrink-0"
+                                                                title="Marcar como respuesta correcta"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                value={opt}
+                                                                onChange={(e) => actualizarOpcion(i, idx, e.target.value, opt)}
+                                                                className={`w-full p-2.5 rounded-lg text-sm border focus:outline-none transition-colors ${opt === q.correct_answer
+                                                                    ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-300'
+                                                                    : 'bg-slate-900 border-slate-600 text-slate-300 hover:border-slate-400 focus:border-purple-500'
+                                                                    }`}
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* ===================== */}
+                                        {/* VISTA: OPCIONES (Opción Múltiple / Llenado clásico) */}
+                                        {/* ===================== */}
+                                        {q.options && !['arrastrar_palabras', 'relacion_columnas', 'texto_opcion_multiple'].includes(quizGenerado.tipo) && (
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 ml-6">
                                                 {q.options.map((opt, idx) => (
                                                     <div key={idx} className="flex items-center gap-2">

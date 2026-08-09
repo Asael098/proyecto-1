@@ -2,81 +2,82 @@ import React from "react";
 import { Outlet, Link } from 'react-router-dom';
 import ProfileMenu from './ProfileMenu.jsx'; // 1. Tu nuevo menú inteligente
 import { jwtDecode } from 'jwt-decode';
+import { ChartColumnStacked, School, Bot, BookCheck, Users, LayoutDashboard, Link2, Tag, UserStar, Shapes } from 'lucide-react';
 
 // DICCIONARIO DE RUTAS
 const MENU_LINKS = [
     {
         path: '/Dashboard',
         label: 'Dashboard',
-        icon: '📊',
+        icon: <ChartColumnStacked />,
         rolesPermitidos: ['admin']
     },
     {
         path: '/PanelDocente',
         label: 'Mi Panel',
-        icon: '👨‍🏫',
+        icon: <LayoutDashboard />,
         rolesPermitidos: ['docente']
     },
     {
         path: '/PanelAlumno',
         label: 'Mis Clases',
-        icon: '🎓',
+        icon: <Shapes />,
         rolesPermitidos: ['alumno']
     },
 
     {
         path: '/Alumnos',
         label: 'Alumnos',
-        icon: '📚',
+        icon: <UserStar />,
         rolesPermitidos: ['admin', 'coordinador']
     },
     {
         path: '/Personal',
         label: 'Personal',
-        icon: '👥',
+        icon: <Users />,
         rolesPermitidos: ['admin']
     },
     {
         path: '/Asignaciones',
         label: 'Asignaciones',
-        icon: '🔗',
+        icon: <Link2 />,
         rolesPermitidos: ['admin'] // Solo el admin hace esto
     },
     {
         path: '/Grupos',
         label: 'Mis Grupos',
-        icon: '🏫',
+        icon: <School />,
         rolesPermitidos: ['docente'] // Solo el profesor debe ver y gestionar sus propios grupos
     },
     {
         path: '/Grupos-Asignacion',
         label: 'Grupos Asignacion',
-        icon: '🏷️',
+        icon: <Tag />,
         rolesPermitidos: ['docente'] // Solo el profesor debe ver y gestionar sus propios grupos
     },
     {
         path: '/Quizzes',
         label: 'Mis Quizzes',
-        icon: '📝',
+        icon: <BookCheck />,
         rolesPermitidos: ['docente']
     },
     {
         path: '/CalificacionesDocente',
         label: 'Calificaciones',
-        icon: '📊',
+        icon: <ChartColumnStacked />,
         rolesPermitidos: ['docente']
     },
     {
         path: '/GeneradorIA',
-        label: 'IA Generator ✨',
-        icon: '🤖',
+        label: 'IA Generator ',
+        icon: <Bot />,
         rolesPermitidos: ['docente']
     },
 
     {
         path: '/MisCalificaciones',
         label: 'Mis Calificaciones',
-        icon: '📝',
+        icon: <BookCheck />,
         rolesPermitidos: ['alumno']
     }
 ];
@@ -97,14 +98,14 @@ export default function Aside() {
     const enlacesVisibles = MENU_LINKS.filter(link => link.rolesPermitidos.includes(usuarioRol));
 
     return (
-        <div className="flex h-screen bg-slate-900 text-slate-200">
+        <div className="flex h-screen bg-slate-900 text-slate-200 font-playfair">
 
             {/* ========================================== */}
             {/* 1. MENÚ LATERAL IZQUIERDO (SIDEBAR) */}
             {/* ========================================== */}
             <aside className="w-64 bg-slate-800 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.2)] border-r border-slate-700 z-20 ">
                 <div className="p-6 border-b border-slate-700">
-                    <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500 tracking-wider">
+                    <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500 tracking-wider">
                         Quizz<span className="text-white">Hub</span>
                     </h2>
                 </div>
@@ -114,9 +115,14 @@ export default function Aside() {
                         <Link
                             key={index}
                             to={link.path}
-                            className="block px-4 py-3 rounded-xl hover:bg-slate-700/50 transition-colors flex items-center gap-3 font-medium text-slate-300 hover:text-white"
+                            // 1. Agregamos la clase "group" al contenedor principal
+                            className="block px-4 py-3 rounded-xl hover:bg-slate-700/50 transition-colors flex items-center gap-3 font-medium text-slate-300 hover:text-white group"
                         >
-                            <span className="text-xl">{link.icon}</span>
+                            {/* 2. Le damos transiciones suaves, lo movemos hacia arriba y le cambiamos el color al hacer hover en el grupo */}
+                            <span className="text-xl transition-all duration-300 group-hover:-translate-y-1 group-hover:text-blue-400">
+                                {link.icon}
+                            </span>
+
                             {link.label}
                         </Link>
                     ))}

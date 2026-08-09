@@ -212,7 +212,7 @@ export default function ResolverExamenPage() {
     // ==========================================
     if (examenTerminado) {
         return (
-            <div className="min-h-screen bg-slate-900 p-8 flex items-center justify-center font-sans">
+            <div className="min-h-screen bg-slate-900 p-8 flex items-center justify-center font-sanspro">
                 <div className="bg-slate-800 p-10 rounded-3xl shadow-2xl border border-slate-700 text-center max-w-lg w-full transform animate-fade-in">
                     <h1 className="text-4xl text-white font-bold mb-4">¡Examen Terminado!</h1>
                     <div className="w-32 h-32 mx-auto bg-blue-500/20 rounded-full flex items-center justify-center border-4 border-blue-500 mb-6 shadow-[0_0_30px_rgba(59,130,246,0.3)]">
@@ -238,7 +238,7 @@ export default function ResolverExamenPage() {
     // VISTA A: RESOLUCIÓN DEL EXAMEN
     // ==========================================
     return (
-        <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sans text-slate-200 pb-24">
+        <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sanspro text-slate-200 pb-24">
 
             <div className="max-w-4xl mx-auto">
                 <button onClick={() => navigate(-1)} className="mb-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors">

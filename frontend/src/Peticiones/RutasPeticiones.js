@@ -1,17 +1,17 @@
+const API_URL = import.meta.env.VITE_API_URL;
 
-
-export const AlumnosTable = 'http://localhost:5000/estudiantes'
-export const PersonalTable = 'http://localhost:5000/personal'
-export const AsignacionesTable = 'http://localhost:5000/asignacion'
-export const GruposTable = 'http://localhost:5000/grupos'
-export const MisAlumnosTable = 'http://localhost:5000/docente/mis-alumnos';
-export const AsignacionGrupoTable = 'http://localhost:5000/asignacion-grupo';
-export const QuizzesTable = 'http://localhost:5000/quizzes';
-export const ActividadesTable = 'http://localhost:5000/actividades';
-export const AlumnoMisGruposTable = 'http://localhost:5000/alumno/mis-grupos';
-export const AlumnoActividadesTable = 'http://localhost:5000/alumno/actividades';
-export const CalificacionesTable = 'http://localhost:5000/calificaciones';
-export const AlumnoCalificacionesTable = 'http://localhost:5000/alumno/mis-calificaciones';
-export const ReporteCalificacionesTable = 'http://localhost:5000/calificaciones/reporte';
-export const EstadisticasTable = 'http://localhost:5000/dashboard/estadisticas';
-export const GeneradorIATable = 'http://localhost:5000/ia/generar';
+export const AlumnosTable = `${API_URL}/estudiantes`;
+export const PersonalTable = `${API_URL}/personal`;
+export const AsignacionesTable = `${API_URL}/asignacion`;
+export const GruposTable = `${API_URL}/grupos`;
+export const MisAlumnosTable = `${API_URL}/docente/mis-alumnos`;
+export const AsignacionGrupoTable = `${API_URL}/asignacion-grupo`;
+export const QuizzesTable = `${API_URL}/quizzes`;
+export const ActividadesTable = `${API_URL}/actividades`;
+export const AlumnoMisGruposTable = `${API_URL}/alumno/mis-grupos`;
+export const AlumnoActividadesTable = `${API_URL}/alumno/actividades`;
+export const CalificacionesTable = `${API_URL}/calificaciones`;
+export const AlumnoCalificacionesTable = `${API_URL}/alumno/mis-calificaciones`;
+export const ReporteCalificacionesTable = `${API_URL}/calificaciones/reporte`;
+export const EstadisticasTable = `${API_URL}/dashboard/estadisticas`;
+export const GeneradorIATable = `${API_URL}/ia/generar`;

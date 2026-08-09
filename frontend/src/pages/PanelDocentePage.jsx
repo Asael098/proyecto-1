@@ -227,7 +227,7 @@ export default function PanelDocentePage() {
 
     if (grupoActivo) {
         return (
-            <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sans text-slate-200">
+            <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sanspro text-slate-200">
                 <button onClick={volverAlGrid} className="mb-6 flex items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors font-medium">
                     <span>←</span> Volver a mis clases
                 </button>
@@ -442,7 +442,7 @@ export default function PanelDocentePage() {
 
     // VISTA B: GRID PRINCIPAL (Tarjetas de Clases)
     return (
-        <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sans text-slate-200">
+        <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sanspro text-slate-200">
             <div className="mb-8 border-b border-slate-700 pb-4 flex justify-between items-end">
                 <div>
                     <h1 className="text-3xl font-bold text-white tracking-wide">Mi Panel de Docente</h1>

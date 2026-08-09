@@ -2,12 +2,14 @@ import logimg from '../assets/logo.png'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { jwtDecode } from 'jwt-decode';
+import { EyeDashed, EyeClosed } from 'lucide-react'
 
 function LoginPage2() {
 
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
   const [mensaje, setmensaje] = useState('');
+  const [visible, setvisible] = useState(false);
   const navigate = useNavigate();
 
   const Submit = async (e) => {
@@ -88,8 +90,8 @@ function LoginPage2() {
 
               <div className="flex relative">
                 <p className="absolute -top-2 left-2 bg-zinc-800 text-xs">Password</p>
-                <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Contraseña" className="w-full p-2 border rounded-sm" />
-                <span className="absolute hidden">icon</span>
+                <input value={password} onChange={(e) => setPassword(e.target.value)} type={`${visible ? 'text' : 'password'}`} placeholder="Contraseña" className="w-full p-2 border rounded-sm" />
+                <span className="absolute top-2 right-3"><button onClick={() => setvisible(!visible)} type='button'>{visible ? <EyeClosed /> : <EyeDashed />}</button></span>
 
               </div>
 

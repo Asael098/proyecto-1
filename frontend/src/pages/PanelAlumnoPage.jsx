@@ -67,7 +67,7 @@ export default function PanelAlumnoPage() {
     // ==========================================
     if (grupoActivo) {
         return (
-            <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sans text-slate-200">
+            <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sanspro text-slate-200">
                 <button onClick={volverAlGrid} className="mb-6 flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors font-medium">
                     <span>←</span> Volver a mis clases
                 </button>
@@ -171,7 +171,7 @@ export default function PanelAlumnoPage() {
     // VISTA B: GRID PRINCIPAL (Tarjetas)
     // ==========================================
     return (
-        <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sans text-slate-200">
+        <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sanspro text-slate-200">
             <div className="mb-8 border-b border-slate-700 pb-4">
                 <h1 className="text-3xl font-bold text-white tracking-wide">Mi Espacio de Estudio</h1>
                 <p className="text-slate-400 mt-2">Selecciona un grupo para ver tus exámenes y actividades pendientes.</p>

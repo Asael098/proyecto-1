@@ -126,7 +126,7 @@ export default function QuizzesPage() {
     // RENDERIZADO VISUAL
     // ==========================================
     return (
-        <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sans text-slate-200">
+        <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sanspro text-slate-200">
             <div className="mb-8 border-b border-slate-700 pb-4">
                 <h1 className="text-3xl font-bold text-white tracking-wide">Gestor de Evaluaciones</h1>
                 <p className="text-slate-400 mt-2">Crea y configura la estructura básica de tus Quizzes.</p>

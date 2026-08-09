@@ -128,7 +128,7 @@ function AlumnosPage() {
 
 
   return (
-    <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sans text-slate-200">
+    <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sanspro text-slate-200">
 
       {/* Encabezado del Dashboard */}
       <div className="mb-8 border-b border-slate-700 pb-4">

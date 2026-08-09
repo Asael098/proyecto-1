@@ -84,7 +84,9 @@ export default function ConstructorQuizPage() {
 
     const limpiarFormulario = () => {
         setTextoPregunta(''); setOpcionA(''); setOpcionB(''); setOpcionC(''); setRespuestaCorrecta('');
-        setTextoLectura(''); setUrlAudio(''); setOracionCorrecta(''); setParejas([{ izquierda: '', derecha: '' }]);
+        // No limpiar textoLectura si estamos en modo texto_opcion_multiple (para seguir agregando preguntas al mismo texto)
+        if (tipoFormato !== 'texto_opcion_multiple') setTextoLectura('');
+        setUrlAudio(''); setOracionCorrecta(''); setParejas([{ izquierda: '', derecha: '' }]);
     };
 
     const quitarPregunta = (index) => {
@@ -124,7 +126,7 @@ export default function ConstructorQuizPage() {
     // RENDERIZADO VISUAL
     // ==========================================
     return (
-        <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sans text-slate-200">
+        <div className="min-h-screen bg-slate-900 p-6 md:p-8 w-full font-sanspro text-slate-200">
 
             <div className="mb-6 flex justify-between items-center border-b border-slate-700 pb-4">
                 <div>
@@ -142,10 +144,28 @@ export default function ConstructorQuizPage() {
                 <div className="w-full xl:w-1/3 bg-slate-800 p-6 rounded-2xl shadow-2xl border border-slate-700 sticky top-8 max-h-[85vh] overflow-y-auto custom-scrollbar">
                     <h2 className="text-xl font-semibold text-emerald-400 mb-6 border-b border-slate-700 pb-4">🔧 Configurar Pregunta</h2>
 
+                    {/* ===================== */}
+                    {/* BLOQUE FIJO: TEXTO DE LECTURA (fuera del form, persiste entre preguntas) */}
+                    {/* ===================== */}
+                    {tipoFormato === 'texto_opcion_multiple' && (
+                        <div className="mb-4 bg-slate-900/80 p-4 rounded-xl border border-blue-500/30">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="text-xl">📖</span>
+                                <p className="text-sm text-blue-400 font-semibold">Texto de Lectura Compartido</p>
+                            </div>
+                            <textarea
+                                placeholder="Pega aquí el texto de lectura completo. Todas las preguntas que agregues compartirán este texto."
+                                value={textoLectura} onChange={(e) => setTextoLectura(e.target.value)}
+                                required rows="5" className="border border-blue-500/30 bg-slate-800 text-blue-100 p-3 rounded-lg w-full resize-none leading-relaxed text-sm focus:border-blue-400 outline-none transition-colors"
+                            />
+                            <p className="text-xs text-slate-500 mt-1">Este texto se mostrará a los alumnos. Puedes seguir agregando preguntas debajo.</p>
+                        </div>
+                    )}
+
                     <form onSubmit={agregarPreguntaTemporal} className="space-y-4">
                         <Select
                             name="tipoFormato" placeholder="-- Elige el formato de pregunta --"
-                            onChange={(e) => { setTipoFormato(e.target.value); limpiarFormulario(); }}
+                            onChange={(e) => { setTipoFormato(e.target.value); limpiarFormulario(); setTextoLectura(''); }}
                             opciones={[
                                 { valor: 'opcion_multiple', texto: '1. Opción Múltiple Clásica' },
                                 { valor: 'llenado_espacios', texto: '2. Llenado de Espacios (Fill in)' },
@@ -160,19 +180,10 @@ export default function ConstructorQuizPage() {
                             <>
                                 {/* Instrucción principal (Aplica para todos) */}
                                 <textarea
-                                    placeholder="Instrucción de la pregunta (Ej. Lee el texto y responde / Escucha y selecciona...)"
+                                    placeholder={tipoFormato === 'texto_opcion_multiple' ? 'Pregunta sobre el texto (Ej. What is the main idea?)' : 'Instrucción de la pregunta (Ej. Lee el texto y responde / Escucha y selecciona...)'}
                                     value={textoPregunta} onChange={(e) => setTextoPregunta(e.target.value)}
                                     required rows="2" className="border border-slate-600 bg-slate-700 text-white p-2 rounded-lg w-full"
                                 />
-
-                                {/* 3. LECTURA */}
-                                {tipoFormato === 'texto_opcion_multiple' && (
-                                    <textarea
-                                        placeholder="Pega aquí el texto de lectura completo..."
-                                        value={textoLectura} onChange={(e) => setTextoLectura(e.target.value)}
-                                        required rows="4" className="border border-blue-500/50 bg-slate-700 text-white p-2 rounded-lg w-full"
-                                    />
-                                )}
 
                                 {/* 4. AUDIO */}
                                 {tipoFormato === 'audio_opcion_multiple' && (
@@ -248,7 +259,18 @@ export default function ConstructorQuizPage() {
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {/* 2. REEMPLAZA LAS CASI 100 LÍNEAS DE VISTA PREVIA CON ESTO: */}
+                            {/* Bloque de lectura compartida en la vista previa */}
+                            {preguntas.some(p => p.respuestas?.tipoFormato === 'texto_opcion_multiple') && (
+                                <div className="bg-slate-900/80 p-4 rounded-xl border border-blue-500/30 mb-2">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-xl">📖</span>
+                                        <p className="text-sm text-blue-400 font-semibold">Texto de Lectura</p>
+                                    </div>
+                                    <p className="text-sm text-blue-100 leading-relaxed whitespace-pre-wrap">
+                                        {preguntas.find(p => p.respuestas?.tipoFormato === 'texto_opcion_multiple')?.respuestas?.lectura || 'Sin texto'}
+                                    </p>
+                                </div>
+                            )}
                             {preguntas.map((item, index) => (
                                 <TarjetaPregunta
                                     key={index}
