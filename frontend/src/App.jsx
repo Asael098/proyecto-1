@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom"
+import { Route, Routes, Navigate } from "react-router-dom"
 
 import LoginPage from './pages/LoginPage';
 import DashboradPage from "./pages/DashboradPage";
@@ -27,9 +27,9 @@ function App() {
 
     <Routes>
 
-
+      {/* Redirección por defecto a /login si entran a la raíz de la página */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<LoginPage />} />
-
       <Route element={<Aside />}>
 
         <Route element={<ProteccionRuta UsuariosPermitidos={'docente'} />}>
