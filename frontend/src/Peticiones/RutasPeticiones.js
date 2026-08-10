@@ -15,3 +15,4 @@ export const AlumnoCalificacionesTable = `${API_URL}/alumno/mis-calificaciones`;
 export const ReporteCalificacionesTable = `${API_URL}/calificaciones/reporte`;
 export const EstadisticasTable = `${API_URL}/dashboard/estadisticas`;
 export const GeneradorIATable = `${API_URL}/ia/generar`;
+export const AuthTable = `${API_URL}/auth`;

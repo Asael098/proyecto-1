@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { jwtDecode } from 'jwt-decode';
 import { EyeDashed, EyeClosed } from 'lucide-react'
 
+import { AuthTable } from '../Peticiones/RutasPeticiones';
+
 function LoginPage2() {
 
   const [correo, setCorreo] = useState('');
@@ -21,7 +23,7 @@ function LoginPage2() {
     setCorreo('')
     setPassword('')
     try {
-      const respuesta = await fetch('http://localhost:5000/auth',
+      const respuesta = await fetch(AuthTable,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
