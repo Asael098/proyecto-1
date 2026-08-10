@@ -103,11 +103,7 @@ function LoginPage2() {
             </form>
 
 
-            <div className="absolute bottom-5">
-              <p className="text-xs">no tienes cuenta? <a href="">crea una</a></p>
 
-
-            </div>
 
 
           </div>
