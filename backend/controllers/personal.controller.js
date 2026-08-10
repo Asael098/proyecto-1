@@ -99,6 +99,7 @@ class PersonalController {
 
             // 2. Protegemos a los administradores
             if (checkResult.rows[0].rol === 'admin') {
+                console.log('no se puede elimnar admin')
                 return res.status(403).json({ error: 'Operación denegada: No se puede eliminar a un administrador.' });
             }
 
@@ -108,8 +109,8 @@ class PersonalController {
             const value = [id];
 
             const resultado = await db.query(query, value);
-            if (resultado.rows.length === 0) {
-                return res.status(404).json({ err: 'esa persona no existe en la base de datos ' })
+            if (resultado.rowCount === 0) {
+                return res.status(404).json({ error: 'Esa persona no existe en la base de datos.' })
             }
             res.status(200).json({ msj: `personal ${id} eliminada correctamente` })
 
@@ -125,7 +126,6 @@ class PersonalController {
 
         res.json({ msj: 'consultar un profe' })
     }
-
 
 
 

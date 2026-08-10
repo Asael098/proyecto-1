@@ -163,7 +163,7 @@ function AlumnosPage() {
               <Input placeholder='Apellido Paterno' type='text' name='apellido_p' defaultValue={editar?.apellido_p || ''} />
               <Input placeholder='Apellido Materno' type='text' name='apellido_m' defaultValue={editar?.apellido_m || ''} />
               <Input placeholder='Correo Electrónico' type='email' name='correo' defaultValue={editar?.correo || ''} />
-              <Input placeholder='Contraseña' type='text' name='password' defaultValue={editar?.password || ''} />
+              <Input placeholder='Contraseña' type='text' name='password' defaultValue={editar?.password || ''} length={8} />
               <Input placeholder='Fecha de Nacimiento' type='date' name='fecha_n' defaultValue={editar?.fecha_nacimiento || ''} />
               <Input placeholder='Teléfono' type='tel' name='telefono' defaultValue={editar?.telefono || ''} />
             </div>

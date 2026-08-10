@@ -72,6 +72,11 @@ const MENU_LINKS = [
         label: 'IA Generator ',
         icon: <Bot />,
         rolesPermitidos: ['docente']
+    }, {
+        path: '/MisTareas',
+        label: 'Mis Tareas',
+        icon: <BookCheck />, // O el icono de Lucide que prefieras
+        rolesPermitidos: ['alumno']
     },
 
     {
@@ -141,7 +146,7 @@ export default function Aside() {
             <main className="flex-1 flex flex-col h-screen overflow-hidden w-full relative z-10">
 
                 {/* NUEVO: Barra Superior (Topbar) */}
-                <header className="h-20 bg-slate-800/40 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-end px-8 shrink-0 shadow-sm">
+                <header className="h-20 bg-slate-800/40 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-end px-8 shrink-0 shadow-sm z-50">
                     {/* 2. Aquí inyectamos el Avatar y el menú desplegable */}
                     <ProfileMenu />
                 </header>

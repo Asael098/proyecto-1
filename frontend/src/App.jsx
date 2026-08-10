@@ -15,6 +15,7 @@ import ResolverExamenPage from "./pages/ResolverExamenPage";
 import CalificacionesAlumnoPage from "./pages/CalificacionesAlumnoPage";
 import CalificacionesDocentePage from "./pages/CalificacionesDocentePage";
 import GeneradorIAPage from "./pages/GeneradorIAPage";
+import TareasAlumnoPage from "./pages/TareasAlumnoPage";
 import { useState } from "react";
 import { jwtDecode } from 'jwt-decode'
 import { ProteccionRuta } from './componets/ProtectRouter'
@@ -56,6 +57,7 @@ function App() {
           <Route path="/PanelAlumno" element={<PanelAlumnoPage />} />
           <Route path="/ResolverExamen/:id_g_asignado/:id_quizz" element={<ResolverExamenPage />} />
           <Route path="/MisCalificaciones" element={<CalificacionesAlumnoPage />} />
+          <Route path="/MisTareas" element={<TareasAlumnoPage />} />
         </Route>
 
 

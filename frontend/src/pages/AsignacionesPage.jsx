@@ -14,8 +14,21 @@ export default function AsignacionesPage() {
 
     // Arreglo que guardará los IDs de los alumnos marcados (Ej: [2, 5, 8])
     const [alumnosAsignados, setAlumnosAsignados] = useState([]);
+    const [busqueda, setBusqueda] = useState('');
 
     const token = localStorage.getItem('token');
+
+    // Filtrar alumnos según la búsqueda
+    const alumnosFiltrados = alumnos.filter(alumno => {
+        if (!busqueda.trim()) return true;
+        const termino = busqueda.toLowerCase();
+        return (
+            alumno.nombre?.toLowerCase().includes(termino) ||
+            alumno.apellido_p?.toLowerCase().includes(termino) ||
+            alumno.apellido_m?.toLowerCase().includes(termino) ||
+            alumno.correo?.toLowerCase().includes(termino)
+        );
+    });
 
     // ==========================================
     // 1. CARGAR DATOS INICIALES (Docentes y Alumnos)
@@ -165,15 +178,32 @@ export default function AsignacionesPage() {
                         </span>
                     </div>
 
+                    {/* Barra de búsqueda */}
+                    {docenteSeleccionado && alumnos.length > 0 && (
+                        <div className="relative mb-5">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">🔍</span>
+                            <input
+                                type="text"
+                                placeholder="Buscar alumno por nombre o correo..."
+                                value={busqueda}
+                                onChange={(e) => setBusqueda(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-600 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                            />
+                        </div>
+                    )}
+
                     {!docenteSeleccionado ? (
                         <div className="text-center py-12 text-slate-500 border-2 border-dashed border-slate-700 rounded-xl">
                             <span className="text-4xl block mb-2">👨‍🏫</span>
                             Selecciona un docente en el panel izquierdo para ver la lista.
                         </div>
+                    ) : alumnosFiltrados.length === 0 ? (
+                        <div className="text-center py-8 text-slate-500">
+                            No se encontraron alumnos con "<span className="text-slate-300">{busqueda}</span>".
+                        </div>
                     ) : (
-                        // 2. REEMPLAZA TODO EL MAPEO CON UNA SOLA LÍNEA MAGISTRAL:
                         <CheckListAlumnos
-                            alumnos={alumnos}
+                            alumnos={alumnosFiltrados}
                             alumnosAsignados={alumnosAsignados}
                             onToggle={hacerToggleAlumno}
                         />

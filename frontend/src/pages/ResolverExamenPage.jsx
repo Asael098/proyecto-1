@@ -3,6 +3,20 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { QuizzesTable, CalificacionesTable } from '../Peticiones/RutasPeticiones.js';
 
 // ==========================================
+// HELPER: Detectar y manejar URLs de Google Drive para audio
+// ==========================================
+const esUrlDrive = (url) => {
+    if (!url) return false;
+    return url.includes('drive.google.com');
+};
+
+const obtenerIdDrive = (url) => {
+    if (!url) return '';
+    const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    return match ? match[1] : '';
+};
+
+// ==========================================
 // SUB-COMPONENTE 1: Arrastrar Palabras (Interactividad)
 // ==========================================
 const InterfazArrastrarPalabras = ({ oracionCorrecta, onResponder }) => {
@@ -284,10 +298,21 @@ export default function ResolverExamenPage() {
                                     {/* AUDIO */}
                                     {formato === 'audio_opcion_multiple' && (
                                         <div className="bg-slate-900 p-4 rounded-xl border border-slate-600 mb-6 flex justify-center shadow-inner">
-                                            <audio controls className="w-full max-w-md">
-                                                <source src={resp.audio} type="audio/mpeg" />
-                                                Tu navegador no soporta el elemento de audio.
-                                            </audio>
+                                            {esUrlDrive(resp.audio) ? (
+                                                <iframe
+                                                    src={`https://drive.google.com/file/d/${obtenerIdDrive(resp.audio)}/preview`}
+                                                    width="100%"
+                                                    height="80"
+                                                    style={{ maxWidth: '400px', border: 'none', borderRadius: '8px' }}
+                                                    allow="autoplay"
+                                                    title="Reproductor de audio"
+                                                ></iframe>
+                                            ) : (
+                                                <audio controls className="w-full max-w-md">
+                                                    <source src={resp.audio} type="audio/mpeg" />
+                                                    Tu navegador no soporta el elemento de audio.
+                                                </audio>
+                                            )}
                                         </div>
                                     )}
 

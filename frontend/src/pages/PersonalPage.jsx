@@ -3,6 +3,7 @@ import Table from '../componets/Table.jsx';
 import Form from '../componets/Form.jsx';
 import { Input, Select } from '../componets/Elements.jsx';
 import { DeleteAlert, successAlert } from '../componets/Alerts.jsx';
+import Swal from 'sweetalert2';
 // Asegúrate de tener exportada esta ruta en tu archivo de peticiones
 import { PersonalTable } from '../Peticiones/RutasPeticiones.js';
 
@@ -40,10 +41,17 @@ function PersonalPage() {
         DeleteAlert().then(async (res) => {
             if (res.isConfirmed) {
                 try {
-                    await fetch(`${PersonalTable}/${id}`, {
+                    const peticion = await fetch(`${PersonalTable}/${id}`, {
                         method: 'DELETE',
                         headers: { 'Authorization': token }
                     });
+
+                    const datos = await peticion.json();
+
+                    if (!peticion.ok) {
+                        // Mostrar alerta con el mensaje del servidor (ej: "No se puede eliminar a un administrador")
+                        return Swal.fire('Operación denegada', datos.error || 'No se pudo eliminar el registro.', 'warning');
+                    }
 
                     // Filtramos localmente para no recargar
                     const newdata = data.filter(v => v.id_personal !== id);
@@ -173,7 +181,7 @@ function PersonalPage() {
 
                             <Input placeholder='Teléfono' type='tel' name='telefono' defaultValue={editar?.telefono || ''} />
                             <Input placeholder='Correo Electrónico' type='email' name='correo' defaultValue={editar?.correo || ''} />
-                            <Input placeholder='Contraseña' type='text' name='password' defaultValue={editar?.password || ''} />
+                            <Input placeholder='Contraseña' type='text' name='password' defaultValue={editar?.password || ''} length={8} />
                         </div>
                     </Form>
                 </div>

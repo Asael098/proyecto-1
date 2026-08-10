@@ -107,6 +107,44 @@ class AlumnoController {
             res.status(500).json({ error: `Error en el servidor: ${error.message}` });
         }
     }
+    async obtenerTodasMisActividades(req, res) {
+        const id_alumno = req.usuario.id_alumno;
+
+        try {
+            const query = `
+                SELECT 
+                    aa.id_g_asignado,
+                    aa.id_grupo,
+                    g.nombre AS nombre_grupo,
+                    g.idioma,
+                    q.id_quizz,
+                    q.nombre AS nombre_examen,
+                    q.nivel,
+                    aa.fecha_asignacion,
+                    aa.fecha_limite,
+                    c.puntaje,
+                    c.fecha_evaluacion,
+                    CASE 
+                        WHEN c.id_calificacion IS NOT NULL THEN 'Finalizada'
+                        WHEN aa.fecha_limite < CURRENT_DATE THEN 'No entregada'
+                        ELSE 'Pendiente'
+                    END AS estado
+                FROM asignar_grupo ag
+                INNER JOIN grupos g ON ag.id_grupo = g.id_grupo
+                INNER JOIN asignar_actividades aa ON ag.id_grupo = aa.id_grupo
+                INNER JOIN quizzes q ON aa.id_quizz = q.id_quizz
+                LEFT JOIN calificaciones c ON aa.id_g_asignado = c.id_g_asignado AND c.id_alumno = ag.id_alumno
+                WHERE ag.id_alumno = $1
+                  AND (aa.id_alumno IS NULL OR aa.id_alumno = $1)
+                ORDER BY aa.fecha_limite ASC
+            `;
+            const result = await db.query(query, [id_alumno]);
+            res.status(200).json(result.rows);
+        } catch (error) {
+            console.log(error);
+            res.status(500).json({ error: `Error en el servidor: ${error.message}` });
+        }
+    }
 }
 
 module.exports = new AlumnoController();

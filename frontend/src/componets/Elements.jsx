@@ -8,6 +8,7 @@ export const Input = (props) => {
             type={props.type}
             name={props.name}
             defaultValue={props.defaultValue}
+            minLength={props.length}
             required
         />
     )

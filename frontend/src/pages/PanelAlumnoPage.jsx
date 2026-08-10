@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Table from '../componets/Table.jsx';
 // Asegúrate de exportar estas dos rutas en tu RutasPeticiones.js
 import { AlumnoMisGruposTable, AlumnoActividadesTable } from '../Peticiones/RutasPeticiones.js';
 
 export default function PanelAlumnoPage() {
+    const location = useLocation();
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
 
@@ -18,6 +19,16 @@ export default function PanelAlumnoPage() {
         if (filtroActividad === 'Todas') return true;
         return act.estado === filtroActividad;
     });
+
+    useEffect(() => {
+        // Si venimos redirigidos desde "Mis Tareas" con un id_grupo en el state
+        if (location.state?.id_grupo && grupos.length > 0) {
+            const grupoEncontrado = grupos.find(g => g.id_grupo === location.state.id_grupo);
+            if (grupoEncontrado) {
+                verDetallesGrupo(grupoEncontrado); // Llama a la función que ya tenías para abrir la vista del grupo
+            }
+        }
+    }, [location.state, grupos]);
 
     // ==========================================
     // 1. Cargar las Tarjetas de mis Grupos
@@ -78,7 +89,7 @@ export default function PanelAlumnoPage() {
                         <h1 className="text-4xl font-bold text-white tracking-wide">{grupoActivo.nombre_grupo}</h1>
                         <p className="text-blue-100 mt-2 text-lg">Idioma: {grupoActivo.idioma}</p>
                         <p className="text-blue-200 mt-1 text-sm flex items-center gap-2">
-                            👨‍🏫 Profesor: {grupoActivo.maestro_nombre} {grupoActivo.maestro_apellido}
+                            Profesor: {grupoActivo.maestro_nombre} {grupoActivo.maestro_apellido}
                         </p>
                     </div>
                     <div className="absolute -bottom-12 -right-12 text-9xl opacity-10">🎓</div>
