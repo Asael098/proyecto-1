@@ -99,6 +99,11 @@ class Estudiante {
         const { nombre, apellido_p, apellido_m, fecha_n, telefono, correo, password } = req.body
         try {
 
+            if (Number.isNaN(+telefono)) {
+
+                return res.status(400).json({ error: 'Solo pueden haber números en el campo teléfono' });
+            }
+
             const query = `update alumno
             set nombre=$1,apellido_p=$2,apellido_m=$3,fecha_nacimiento=$4,telefono=$5,correo=$6,password=$7
             where id_alumno=$8`

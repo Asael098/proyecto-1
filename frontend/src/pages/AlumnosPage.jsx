@@ -5,6 +5,7 @@ import { AlumnosTable } from '../Peticiones/RutasPeticiones.js';
 import Form from '../componets/Form.jsx';
 import { Input } from '../componets/Elements.jsx';
 import { DeleteAlert, successAlert } from '../componets/Alerts.jsx';
+import Swal from 'sweetalert2';
 
 
 function AlumnosPage() {
@@ -76,22 +77,25 @@ function AlumnosPage() {
 
     peticion.then(res => {
       if (!res.ok) {
-        alert(res.json().error || 'Error al guardar el registro');
-        return;
-
+        // Obtenemos el mensaje de error del backend
+        return res.json().then(errorData => {
+          Swal.fire('Operación denegada', errorData.error || 'No se pudo guardar el registro.', 'warning');
+          // Lanzar un error aquí corta la cadena y salta directamente al .catch()
+          throw new Error('ErrorBackend');
+        });
       }
-      return res.json()
-
-    }
-    ).then(res => {
-
-      successAlert('Registro completado')
-      CargarAlumnos()
-
-    }).catch(err => console.log('error de red', err))
-
-    e.target.reset();
-
+      return res.json();
+    }).then(res => {
+      // Este bloque ya solo se ejecuta si todo salió bien
+      successAlert('Registro completado');
+      CargarAlumnos();
+      e.target.reset(); // Limpiamos el formulario solo si tuvo éxito
+    }).catch(err => {
+      // Ignoramos el error intencional, solo logueamos los de red reales
+      if (err.message !== 'ErrorBackend') {
+        console.log('error de red', err);
+      }
+    });
   }
 
 

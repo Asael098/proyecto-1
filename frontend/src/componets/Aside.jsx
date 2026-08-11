@@ -1,8 +1,8 @@
-import React from "react";
-import { Outlet, Link } from 'react-router-dom';
-import ProfileMenu from './ProfileMenu.jsx'; // 1. Tu nuevo menú inteligente
+import React, { useState } from "react";
+import { Outlet, Link, useLocation } from 'react-router-dom';
+import ProfileMenu from './ProfileMenu.jsx';
 import { jwtDecode } from 'jwt-decode';
-import { ChartColumnStacked, School, Bot, BookCheck, Users, LayoutDashboard, Link2, Tag, UserStar, Shapes } from 'lucide-react';
+import { ChartColumnStacked, School, Bot, BookCheck, Users, LayoutDashboard, Link2, Tag, UserStar, Shapes, Menu, X } from 'lucide-react';
 
 // DICCIONARIO DE RUTAS
 const MENU_LINKS = [
@@ -75,7 +75,7 @@ const MENU_LINKS = [
     }, {
         path: '/MisTareas',
         label: 'Mis Tareas',
-        icon: <BookCheck />, // O el icono de Lucide que prefieras
+        icon: <BookCheck />,
         rolesPermitidos: ['alumno']
     },
 
@@ -89,6 +89,8 @@ const MENU_LINKS = [
 
 export default function Aside() {
     const token = localStorage.getItem('token');
+    const location = useLocation();
+    const [menuAbierto, setMenuAbierto] = useState(false);
     let usuarioRol = 'invitado';
 
     if (token) {
@@ -106,25 +108,51 @@ export default function Aside() {
         <div className="flex h-screen bg-slate-900 text-slate-200 font-playfair">
 
             {/* ========================================== */}
+            {/* OVERLAY OSCURO (Solo visible en móvil cuando el menú está abierto) */}
+            {/* ========================================== */}
+            {menuAbierto && (
+                <div
+                    className="fixed inset-0 bg-black/60 z-30 md:hidden"
+                    onClick={() => setMenuAbierto(false)}
+                />
+            )}
+
+            {/* ========================================== */}
             {/* 1. MENÚ LATERAL IZQUIERDO (SIDEBAR) */}
             {/* ========================================== */}
-            <aside className="w-64 bg-slate-800 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.2)] border-r border-slate-700 z-20 ">
-                <div className="p-6 border-b border-slate-700">
+            <aside className={`
+                fixed md:static inset-y-0 left-0 w-64 bg-slate-800 flex flex-col 
+                shadow-[4px_0_24px_rgba(0,0,0,0.2)] border-r border-slate-700 z-40
+                transform transition-transform duration-300 ease-in-out
+                ${menuAbierto ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
+            `}>
+                <div className="p-6 border-b border-slate-700 flex items-center justify-between">
                     <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500 tracking-wider">
                         Quizz<span className="text-white">Hub</span>
                     </h2>
+                    {/* Botón de cerrar (solo visible en móvil) */}
+                    <button
+                        onClick={() => setMenuAbierto(false)}
+                        className="md:hidden text-slate-400 hover:text-white transition-colors"
+                    >
+                        <X size={24} />
+                    </button>
                 </div>
 
-                <nav className="flex-1 px-4 py-6 space-y-2">
+                <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
                     {enlacesVisibles.map((link, index) => (
                         <Link
                             key={index}
                             to={link.path}
-                            // 1. Agregamos la clase "group" al contenedor principal
-                            className="block px-4 py-3 rounded-xl hover:bg-slate-700/50 transition-colors flex items-center gap-3 font-medium text-slate-300 hover:text-white group"
+                            onClick={() => setMenuAbierto(false)}
+                            className={`block px-4 py-3 rounded-xl transition-colors flex items-center gap-3 font-medium group
+                                ${location.pathname === link.path
+                                    ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
+                                    : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+                                }`}
                         >
-                            {/* 2. Le damos transiciones suaves, lo movemos hacia arriba y le cambiamos el color al hacer hover en el grupo */}
-                            <span className="text-xl transition-all duration-300 group-hover:-translate-y-1 group-hover:text-blue-400">
+                            <span className={`text-xl transition-all duration-300 group-hover:-translate-y-1 group-hover:text-blue-400
+                                ${location.pathname === link.path ? 'text-blue-400' : ''}`}>
                                 {link.icon}
                             </span>
 
@@ -145,9 +173,24 @@ export default function Aside() {
             {/* ========================================== */}
             <main className="flex-1 flex flex-col h-screen overflow-hidden w-full relative z-10">
 
-                {/* NUEVO: Barra Superior (Topbar) */}
-                <header className="h-20 bg-slate-800/40 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-end px-8 shrink-0 shadow-sm z-50">
-                    {/* 2. Aquí inyectamos el Avatar y el menú desplegable */}
+                {/* Barra Superior (Topbar) */}
+                <header className="h-16 md:h-20 bg-slate-800/40 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-between px-4 md:px-8 shrink-0 shadow-sm z-50">
+                    {/* Botón hamburguesa (solo visible en móvil) */}
+                    <button
+                        onClick={() => setMenuAbierto(true)}
+                        className="md:hidden text-slate-400 hover:text-white transition-colors p-2"
+                    >
+                        <Menu size={24} />
+                    </button>
+
+                    {/* Logo móvil (solo visible en móvil) */}
+                    <h2 className="md:hidden text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">
+                        Quizz<span className="text-white">Hub</span>
+                    </h2>
+
+                    {/* Espaciador para desktop (empuja ProfileMenu a la derecha) */}
+                    <div className="hidden md:block flex-1" />
+
                     <ProfileMenu />
                 </header>
 

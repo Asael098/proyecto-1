@@ -111,6 +111,9 @@ function PersonalPage() {
                 successAlert('Registro actualizado correctamente');
                 CargarPersonal();
                 setEditar(null);
+            } else if (peticion.status === 403) {
+                const errorData = await peticion.json();
+                Swal.fire('Operación denegada', errorData.error || 'No tienes permisos para modificar a otro administrador.', 'error');
             }
         } catch (error) {
             console.log('Error al actualizar', error);
@@ -180,8 +183,12 @@ function PersonalPage() {
 
 
                             <Input placeholder='Teléfono' type='tel' name='telefono' defaultValue={editar?.telefono || ''} />
-                            <Input placeholder='Correo Electrónico' type='email' name='correo' defaultValue={editar?.correo || ''} />
-                            <Input placeholder='Contraseña' type='text' name='password' defaultValue={editar?.password || ''} length={8} />
+                            {!editar && (
+                                <>
+                                    <Input placeholder='Correo Electrónico' type='email' name='correo' defaultValue={''} />
+                                    <Input placeholder='Contraseña' type='text' name='password' defaultValue={''} length={8} />
+                                </>
+                            )}
                         </div>
                     </Form>
                 </div>
